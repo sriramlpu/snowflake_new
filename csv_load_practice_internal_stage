@@ -1,0 +1,44 @@
+create database csv_database;
+create schema csv_schema;
+create or replace transient table user_email(
+    id number,
+    first_name varchar(100),
+    last_name varchar(100),
+    email varchar(100),
+    gender varchar(1),
+    about_me varchar(500)
+);
+
+
+create or replace file format csv_format
+type = csv
+skip_header = 1
+record_delimiter = '\n'
+field_delimiter = ','
+field_optionally_enclosed_by = '\047' ---'\047 for single quoted'
+escape = '\134'
+trim_space  = false
+error_on_column_count_mismatch = true
+skip_blank_lines = true
+compression =gzip --AUTO | GZIP | BZ2 | BROTLI | ZSTD | DEFLATE | RAW_DEFLATE | NONE
+empty_field_as_null = false
+null_if = ('\\N', 'NULL', 'NUL','');
+
+create stage csv_stage;
+select * from user_email;
+truncate table user_email;
+copy into user_email from @csv_stage
+file_format = csv_format
+on_error = 'continue'
+force = true;  /*ON_ERROR = { CONTINUE | SKIP_FILE | SKIP_FILE_<num> | 'SKIP_FILE_<num>%' | ABORT_STATEMENT }*/
+--validation_mode = return_all_errors;
+
+
+
+
+select * from table(validate(user_email,JOB_ID => '_last'));
+select * from table(validate(user_email,JOB_ID => 'CopyQueryId'));
+
+list @csv_stage;
+remove @csv_stage/04_sample_email_quote_mixed.csv;
+
