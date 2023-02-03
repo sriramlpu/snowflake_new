@@ -1,0 +1,292 @@
+create or replace transient table json_tbl(
+    json_col variant
+);
+select * from json_tbl;-- create an employee table with one variant column
+
+create or replace transient table employee_tbl(
+    emp_json variant
+);
+
+-- let me insert one single record
+insert into employee_tbl(emp_json)
+select parse_json(
+  '{
+      "name": "John",
+      "age": 30,
+      "height_in_ft": 5.11,
+      "married": true,
+      "has_kids": false,
+      "stock_options": null
+    }');
+
+-- lets run the select sql
+select * from employee_tbl;
+delete from json_tbl;
+insert into json_tbl(json_col) select parse_json('{"firstName":"John", "empid":1001}');
+
+insert into json_tbl (json_col)
+select parse_json(Column1) from values 
+('{"firstName":"Name-1", "empid":1001}'),
+('{"firstName":"Name-2", "empid":1002}'),
+('{"firstName":"Name-3", "empid":1003}'),
+('{"firstName":"Name-4", "empid":1004}'),
+('{"firstName":"Name-5", "empid":1005}')
+;
+
+insert into json_tbl(json_col) select parse_json('{
+    "employee": {
+      "name": "John",
+      "age": 30,
+      "height_in_ft": 5.11,
+      "married": true,
+      "has_kids": false,
+      "stock_options": null,
+      "phone": "+1 123-456-7890",
+      "date_of_birth":"2022-12-08",
+      "dob_timestamp":"2022-12-08T19:27:40.606-08:00",
+      "Address": {
+        "street": "4132 Grant Street",
+        "city": "Rockville",
+        "State": "Minnesota"
+      }
+    }
+  }');
+
+
+-- create an employee table with one variant column
+
+create or replace transient table employee_tbl(
+    emp_json variant
+);
+delete from employee_tbl;
+-- let me insert one single record
+insert into employee_tbl(emp_json)
+select parse_json(
+  '{
+      "name": "John",
+      "age": 30,
+      "height_in_ft": 5.11,
+      "married": true,
+      "has_kids": false,
+      "stock_options": null
+    }');
+
+-- lets run the select sql
+select * from employee_tbl;
+
+select emp_json:name, emp_json:age, emp_json:height_in_ft,emp_json:married, emp_json:has_kids, emp_json:stock_options from employee_tbl;
+
+select emp_json:name::varchar, emp_json:age::int, emp_json:height_in_ft::float, emp_json:married::boolean, emp_json:has_kids::boolean, emp_json:stock_options from employee_tbl;
+
+select 
+    emp_json:age::integer as age,
+    emp_json:name::string as "Name",
+    emp_json:height_in_ft::decimal as height,
+    emp_json:married as is_married,
+    emp_json:has_kids as has_kids,
+    emp_json:stock_options as stock_options
+from employee_tbl;
+
+alter warehouse suspend;
+select 
+    typeof(emp_json:age) as age,
+    typeof(emp_json:name) as "Name",
+    typeof(emp_json:height_in_ft) as height,
+    typeof(emp_json:married) as is_married,
+    typeof(emp_json:has_kids) as has_kids,
+    typeof(emp_json:stock_options) as stock_options
+from employee_tbl;
+
+
+
+insert into employee_tbl(emp_json)
+select parse_json(
+  '{
+    "employee": {
+      "name": "John",
+      "age": 30,
+      "height_in_ft": 5.11,
+      "married": true,
+      "has_kids": false,
+      "stock_options": null,
+      "phone": [
+        "+1 123-456-7890",
+        "+1 098-765-4321"
+      ],
+      "Address": {
+        "street": "3621 McDonald Avenue",
+        "city": "Orlando",
+        "State": "Florida"
+      }
+    }
+  }');
+  
+  select 
+    emp_json:employee.name::varchar,
+    emp_json:employee.age::int,
+    emp_json:employee.has_kids,
+    emp_json:employee.height_in_ft,
+    emp_json:employee.married,
+    emp_json:employee.name,
+    emp_json:employee.phone[0],
+    emp_json:employee.phone[1],
+    emp_json:employee.phone,
+    emp_json:employee.stock_options,
+    emp_json:employee.Address.State,
+    emp_json:employee.Address.city,
+    emp_json:employee.Address.street
+from employee_tbl;
+  
+select array_size(emp_json:employee.phone) from employee_tbl;
+
+delete from employee_tbl;
+
+insert into employee_tbl(emp_json)
+select parse_json(
+  '{
+      "name": "John",
+      "age": 30,
+      "height_in_ft": 5.11,
+      "dob":"2022-12-11",
+      "dob_timestemp":"2022-12-11T00:19:06.043-08:00",
+      "married": true,
+      "has_kids": false,
+      "stock_options": null
+    }');
+
+select * from employee_tbl;
+
+
+ select 
+        emp_json:dob::date,
+        emp_json:dob_timestemp::timestamp
+        from employee_tbl order by 1 desc;
+        
+
+delete from employee_tbl;
+
+
+
+insert into employee_tbl(emp_json)
+select parse_json(column1) from values(
+  '{
+    "employee": {"name": "John-1","age": 30,"height_in_ft": 5.11,"married": true,"has_kids": false,
+      "stock_options": null,"email":"john1@ttips.com","phone": ["+1 123-456-7890","+1 098-765-4321"],
+      "Address": {"street": "3621 McDonald Avenue","city": "Orlando","State": "Florida"}
+               }
+    }'),
+    ('{
+    "employee": {"name": "John-2","age": 33,"height_in_ft": 5.09,"married": false,"has_kids": false,
+      "stock_options": 10,"email":"john2@ttips.com","phone": ["+1 222-456-0987"],
+      "Address": {"street": "532 Locust View Drive","city": "San Jose","State": "California"}
+               }
+    }');
+
+select * from employee_tbl;
+
+
+create or replace sequence emp_seq
+  start 1 
+  increment 1
+  comment = 'employee sequence';
+  
+create or replace sequence phone_seq
+  start 1 
+  increment 1
+  comment = 'phone sequence';
+  
+create or replace sequence address_seq
+  start 1 
+  increment 1
+  comment = 'address sequence';
+  
+  
+  
+  -- employee master table
+create or replace table employee_master(
+    emp_pk integer default emp_seq.nextval,
+    name string,
+    age number(3),
+    height_in_cm decimal(6,3),
+    is_married boolean,
+    has_kids boolean,
+    stock_options integer,
+    email varchar(100)
+);
+
+insert into employee_master (name, age, height_in_cm,is_married,has_kids,stock_options,email)  
+select 
+    emp_json:employee.name::string as name,
+    emp_json:employee.age as age,
+    (emp_json:employee.height_in_ft)*(12*2.54) as height_in_cm,
+    emp_json:employee.married as is_married,
+    emp_json:employee.has_kids as has_kids,
+    emp_json:employee.stock_options as stock_options,
+    emp_json:employee.email::string as email
+from employee_tbl;
+
+select * from employee_master;
+
+-- child table holding all the phones
+create or replace table emp_phones(
+    phone_pk integer default phone_seq.nextval,
+    emp_fk number,
+    phone_type varchar(20),
+    phone_number varchar(30)
+);
+
+insert into emp_phones(emp_fk, phone_type, phone_number)
+select em.emp_pk,'home_phone' as home_phone, et.emp_json:employee.phone[0]::string from employee_tbl et
+inner join employee_master em on em.email = et.emp_json:employee.email
+union all
+
+select em.emp_pk,'home_phone' as home_phone, et.emp_json:employee.phone[1]::string from employee_tbl et
+inner join employee_master em on em.email = et.emp_json:employee.email;
+-- child table holding all the phones
+create or replace table emp_address(
+    address_pk integer default address_seq.nextval,
+    emp_fk number,
+    street_address varchar(200),
+    city varchar(50),
+    state varchar(50)
+);
+
+
+
+truncate table employee_tbl;
+create stage inter;
+insert into employee_tbl(emp_json)
+select parse_json(
+  '{
+      "name": "John",
+      "age": 30,
+      "height_in_ft": 5.11,
+      "dob":"2022-12-11",
+      "dob_timestemp":"2022-12-11T00:19:06.043-08:00",
+      "married": true,
+      "has_kids": false,
+      "stock_options": null
+    }');
+    
+create or replace table json1(name varchar(),
+                  age int,
+                  height_in_ft float,
+                  dob date,
+                  dob_timestamp timestamp,
+                  married boolean,
+                  stock_options varchar());
+                  
+select * from json1;
+copy into json1 from 
+(select 
+ $1:"name"::varchar(),
+ $1:"age"::int,
+ $1:"height_in_ft"::float,
+ $1:"dob"::varchar,
+ $1:"dob_timestemp"::timestamp,
+ $1:"married"::boolean,
+ $1:"stock_options"::varchar() from @inter)
+ file_format = (type=json)
+ force = true;
+ 
+ 
