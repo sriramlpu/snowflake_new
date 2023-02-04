@@ -1,0 +1,40 @@
+import snowflake.connector as sf
+import getpass
+
+password = getpass.getpass("Enter your snowflake password: ")
+conn = sf.connect(user = 'sriramlpu',
+           account = 'rn58533.us-east-2.aws',
+           password = password
+    )
+
+warehouse = 'compute_wh'
+role = 'accountadmin'
+def run_query(connection,query):
+    cursor = connection.cursor()
+    cursor.execute(query)
+    cursor.close()
+try:
+    try:
+        using_role = 'use role {0}'.format(role)
+        run_query(conn,using_role)
+    except:
+        pass
+    try:
+        create_database = 'create database python_database'
+        run_query(conn,create_database)
+    except:
+        pass
+    try:
+        use_database = 'use database python_database'
+        run_query(conn,use_database)
+    except:
+        pass
+    try:
+        create_schema = 'create schema csv_load_python'
+        run_query(conn,create_schema)
+    except:
+        pass
+except:
+    pass
+finally:
+    conn.close()
